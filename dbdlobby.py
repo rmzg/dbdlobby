@@ -4,6 +4,9 @@
 from __future__ import print_function
 import ctypes
 import os
+import pprint
+from datetime import datetime
+import math
 try:
     import winreg
 except ImportError:
@@ -231,33 +234,64 @@ def main():
         'far': 2,
         'near': 3
     }
-    if args.interactive:
-        def get_value(text):
-            while True:
-                value = get_input(text)
-                if not value.strip():
-                    continue
-                return value
+    #if args.interactive:
+        #def get_value(text):
+            #while True:
+                #value = get_input(text)
+                #if not value.strip():
+                    #continue
+                #return value
 
-        players = int(get_value('Player slots needed (1-4): '))
-        location = get_value('Location (close, default, far or near): ')
-        location = locations[location]
-        rank = get_value('Rank to sort by (lowest, highest, or rank number): ')
-    else:
-        players = args.players
-        location = locations[args.location]
-        rank = args.rank
+        #players = int(get_value('Player slots needed (1-4): '))
+        #location = get_value('Location (close, default, far or near): ')
+        #location = locations[location]
+        #rank = get_value('Rank to sort by (lowest, highest, or rank number): ')
+    #else:
+        #players = args.players
+        #location = locations[args.location]
+        #rank = args.rank
 
-    invite_loop(players, location, rank)
+    #invite_loop(players, location, rank)
+    invite_loop();
 
-def invite_loop(*arg, **kw):
-    last_lobby = None
-    while True:
-        if get_input("Press Enter to find lobby, or 'r' "
-                     "to resend last invite: ") == 'r':
-            send_invites(last_lobby)
-            continue
-        last_lobby = find_lobby(*arg, **kw)
+#def invite_loop(*arg, **kw):
+    #last_lobby = None
+    #while True:
+        #if get_input("Press Enter to find lobby, or 'r' "
+                     #"to resend last invite: ") == 'r':
+            #send_invites(last_lobby)
+            #continue
+        #last_lobby = find_lobby(*arg, **kw)
+
+
+def invite_loop():
+    lobbies = get_lobbies(1,2);
+    #pp=pprint.PrettyPrinter(indent=4);
+    #pp.pprint(list(map((lambda x: x.data),stuff)));
+
+    for lobby in lobbies:
+        data = lobby.data
+        start = datetime.strptime(data['SessionStartTime_s'],'%Y-%m-%dT%H:%M:%S.%fZ')
+        now = datetime.utcnow()
+        delta = now - start
+        d_hours = math.floor( delta.seconds / 3600 )
+        d_seconds = delta.seconds % 3600
+        d_minutes = math.floor( d_seconds / 60 )
+        d_seconds = d_minutes % 60
+
+        print( '[%s] slots: %s, min/max/near ranks: %s/%s/%s; started: %s:%s:%s ago\n' % 
+            (data['OWNINGNAME'],
+            data['NUMOPENPUBCONN'],
+            data['MinRank_i'],
+            data['MaxRank_i'],
+            data['NearRank_i'],
+            d_hours,
+            d_minutes,
+            d_seconds,
+            )
+        )
+
+            
 
 if __name__ == '__main__':
     main()
